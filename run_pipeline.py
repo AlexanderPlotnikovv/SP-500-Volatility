@@ -5,12 +5,15 @@ from pathlib import Path
 import config
 from src.data.loader import download_data
 from src.data.features import compute_features, save_features, load_features
-from src.models.har_rv import HarRv, Baseline
+from src.models.baseline import Baseline
+from src.models.har_rv import HarRv
+from src.models.xgboost import XGBoost
 from src.evaluation.metrics import compute_metrics
 
 MODELS = [
     Baseline(),
     HarRv(),
+    XGBoost(),
 ]
 
 FEATURE_COLS = ["RV_d", "RV_w", "RV_m"]
