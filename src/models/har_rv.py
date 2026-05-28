@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
@@ -34,18 +33,3 @@ class HarRv(BaseModel):
             "beta_w": self.model.coef_[1],
             "beta_m": self.model.coef_[2],
         }
-
-
-class Baseline(BaseModel):
-    """
-    Output prediction as previous day RV, i.e RV_t = RV_{t-1}
-    """
-
-    def __init__(self):
-        super().__init__(name="Baseline")
-
-    def fit(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
-        self.is_trained = True
-
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
-        return X['RV_d'].values
