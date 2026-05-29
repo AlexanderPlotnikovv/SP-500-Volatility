@@ -62,7 +62,7 @@ def get_scores(
             score = res_dict.get("positive", 0.0) - res_dict.get("negative", 0.0)
             scores.append(score)
 
-        if i % 10000 == 0:
+        if i % 1024 == 0:
             print(f"[sentiment] Processed {i}/{len(texts)} headlines...")
 
     return np.array(scores)

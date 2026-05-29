@@ -17,6 +17,7 @@ class XGBoost(BaseModel):
             max_depth=3,
             random_state=42,
         )
+        self.FEATURE_COLS = ["RV_d", "RV_w", "RV_m"]
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
         self.model.fit(X_train, y_train)
@@ -26,3 +27,12 @@ class XGBoost(BaseModel):
         if not self.is_trained:
             raise ValueError("Model must be trained before prediction.")
         return self.model.predict(X)
+
+
+class XGBoostNLP(XGBoost):
+    def __init__(self):
+        super().__init__()
+        self.name = "XGBoost-NLP"
+
+        self.USE_NLP = True
+        self.FEATURE_COLS = ["RV_d", "RV_w", "RV_m", "sentiment_mean", "sentiment_std", "news_count"]

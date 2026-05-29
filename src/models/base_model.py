@@ -14,6 +14,8 @@ class BaseModel(ABC):
     def __init__(self, name: str):
         self.name = name
         self.is_trained = False
+        self.FEATURE_COLS = []
+        self.USE_NLP = False
 
     @abstractmethod
     def fit(self, X: pd.DataFrame, y: pd.Series) -> None:

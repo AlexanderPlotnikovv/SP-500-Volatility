@@ -13,6 +13,7 @@ class HarRv(BaseModel):
     def __init__(self):
         super().__init__(name="HAR-RV")
         self.model = LinearRegression()
+        self.FEATURE_COLS = ["RV_d", "RV_w", "RV_m"]
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
         self.model.fit(X_train, y_train)

@@ -11,6 +11,7 @@ class Baseline(BaseModel):
 
     def __init__(self):
         super().__init__(name="Baseline")
+        self.FEATURE_COLS = ['RV_d']
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
         self.is_trained = True
