@@ -7,8 +7,7 @@ __pycache__/
 .Python
 
 # Data
-data/raw/
-data/processed/
+data/
 
 # Outputs
 outputs/
