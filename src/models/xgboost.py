@@ -15,6 +15,10 @@ class XGBoost(BaseModel):
             n_estimators=100,
             learning_rate=0.05,
             max_depth=3,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            reg_alpha=0.05,
+            reg_lambda=1.0,
             random_state=42,
         )
         self.FEATURE_COLS = ["RV_d", "RV_w", "RV_m"]
