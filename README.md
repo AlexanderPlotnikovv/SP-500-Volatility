@@ -38,8 +38,8 @@ S&P 500 (yfinance)          Financial News Headlines
 
 ```bash
 brew install libomp
-git clone https://github.com/AlexanderPlotnikovv/sp500-volatility
-cd sp500-volatility
+git clone https://github.com/AlexanderPlotnikovv/SP-500-Volatility
+cd SP-500-Volatility
 pip install -r requirements.txt
 python3 run_pipeline.py
 ```
@@ -47,8 +47,8 @@ python3 run_pipeline.py
 ### Linux
 
 ```bash
-git clone https://github.com/AlexanderPlotnikovv/sp500-volatility
-cd sp500-volatility
+git clone https://github.com/AlexanderPlotnikovv/SP-500-Volatility
+cd SP-500-Volatility
 pip install -r requirements.txt
 python3 run_pipeline.py
 ```
@@ -68,7 +68,7 @@ run_pipeline.py
 ## Project Structure
 
 ```
-sp500-volatility/
+SP-500-Volatility/
 ├── src/
 │   ├── data/
 │   │   ├── loader.py       # S&P 500 data download
