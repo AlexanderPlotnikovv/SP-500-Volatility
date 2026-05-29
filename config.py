@@ -10,8 +10,8 @@ OUTPUTS_DIR = ROOT_DIR / "outputs" / "predictions"
 
 # Market data
 TICKER = "^GSPC"
-START_DATE = "2010-01-04"
-END_DATE = "2024-12-31"
+START_DATE = "2011-01-04"
+END_DATE = "2020-06-01"
 
 # RV data
 WEEKLY_WINDOW = 5
