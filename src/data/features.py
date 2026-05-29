@@ -85,6 +85,55 @@ def load_features() -> pd.DataFrame:
     return features
 
 
+def merge_sentiment(features: pd.DataFrame, sentiment: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merge market features with NLP sentiment scores by date.
+    Missing days (weekends, holidays) filled with forward fill.
+
+    Args:
+        features:  DataFrame from build_features() with RV_d, RV_w, RV_m, y
+        sentiment: DataFrame from sentiment.py with sentiment_mean, sentiment_std, news_count
+
+    Returns:
+        DataFrame with all columns merged by date
+    """
+
+    sentiment = sentiment.set_index("date")
+    sentiment.index.name = "Date"
+    df = features.join(sentiment, how="left")
+
+    nlp_cols = ["sentiment_mean", "sentiment_std", "news_count"]
+    df[nlp_cols] = df[nlp_cols].ffill()
+
+    df = df.dropna()
+    return df
+
+
+def save_features_nlp(df: pd.DataFrame) -> None:
+    """
+    Save merged features to data/processed/features_nlp.csv.
+
+    Args:
+        df: DataFrame with merged features.
+    """
+    path = config.DATA_PROCESSED_DIR / "features_nlp.csv"
+    df.to_csv(path)
+    print(f"[features] Saved: {path} ({len(df)} rows)")
+
+
+def load_features_nlp() -> pd.DataFrame:
+    """
+    Load merged features from data/processed/features_nlp.csv.
+
+    Returns:
+        DataFrame with merged features.
+    """
+    path = config.DATA_PROCESSED_DIR / "features_nlp.csv"
+    if not path.exists():
+        raise FileNotFoundError("features_nlp.csv not found — run merge_sentiment() first")
+    return pd.read_csv(path, index_col="Date", parse_dates=True)
+
+
 if __name__ == "__main__":
     from loader import download_data
 
