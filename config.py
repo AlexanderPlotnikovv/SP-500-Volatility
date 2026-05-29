@@ -19,3 +19,8 @@ MONTHLY_WINDOW = 22
 
 # Walk-forward validation
 MIN_TRAIN_SIZE = 252
+
+
+def ensure_dirs():
+    for d in [DATA_RAW_DIR, DATA_PROCESSED_DIR, OUTPUTS_DIR]:
+        d.mkdir(parents=True, exist_ok=True)

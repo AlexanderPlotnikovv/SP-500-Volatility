@@ -23,6 +23,8 @@ MODELS = [
 TARGET_COL = "y"
 
 if __name__ == "__main__":
+    config.ensure_dirs()
+
     # Step 1: Download raw data and compute features
     raw_data = download_data()
     features = compute_features(raw_data)
