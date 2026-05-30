@@ -10,8 +10,9 @@ from src.models.baseline import Baseline
 from src.models.har_rv import HarRv
 from src.models.xgboost import XGBoost, XGBoostNLP
 from src.evaluation.metrics import compute_metrics
-from src.nlp.sentiment import load_sentiment_scores
 from src.data.features import merge_sentiment, save_features_nlp, load_features_nlp
+from src.nlp.fetcher import download_headlines, load_headlines
+from src.nlp.sentiment import load_sentiment_scores, load_model, get_scores, aggregate_scores, save_sentiment_scores
 
 MODELS = [
     Baseline(),
@@ -32,9 +33,6 @@ if __name__ == "__main__":
     features = load_features()
 
     # Step 2: Download headlines and compute sentiment
-    from src.nlp.fetcher import download_headlines, load_headlines
-    from src.nlp.sentiment import load_model, get_scores, aggregate_scores, save_sentiment_scores
-
     sentiment_path = config.DATA_PROCESSED_DIR / "sentiment.csv"
     if sentiment_path.exists():
         print("[pipeline] Sentiment cache found, skipping inference.")
@@ -62,11 +60,28 @@ if __name__ == "__main__":
         y = df[TARGET_COL]
 
         predictions = model.window_expand_fit(X, y)
-        metrics = compute_metrics(y, predictions)
-        results[model.name] = metrics
+        mask = ~np.isnan(predictions)
+        preds_clean = np.array(predictions)[mask]
+        y_clean = np.array(y)[mask]
+        dates_clean = y.index[mask]
+
+        metrics = compute_metrics(y_clean, preds_clean)
+        results[model.name] = {
+            "metrics": metrics,
+            "dates": [str(d.date()) for d in dates_clean],
+            "predictions": preds_clean.tolist(),
+            "actuals": y_clean.tolist(),
+        }
 
     # Step 5: Save results
     output_path = config.OUTPUTS_DIR / "results.json"
+    output = {
+        "period": {
+            "start": config.START_DATE,
+            "end": config.END_DATE,
+        },
+        "models": results
+    }
     with open(output_path, "w") as f:
-        json.dump(results, f, indent=4)
+        json.dump(output, f, indent=4)
     print(f"Results saved to {output_path}")
