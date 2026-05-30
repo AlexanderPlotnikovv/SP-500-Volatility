@@ -1,10 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S&P 500 Volatility Forecasting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
-$END$
+
+<header class="header">
+    <div class="header-left">
+        <h1>S&P 500 Volatility Forecasting</h1>
+        <p>realized volatility · nlp sentiment · walk-forward validation</p>
+    </div>
+    <div class="period-badge" id="period-badge">loading...</div>
+</header>
+
+<main class="main">
+
+    <div class="metrics-grid" id="metrics-grid">
+        <div class="loading" style="grid-column: 1/-1;">initializing models...</div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-header">
+            <span class="chart-title">realized volatility — actual vs predicted</span>
+            <div class="legend" id="main-legend"></div>
+        </div>
+        <div class="chart-body">
+            <div id="chart-main" class="loading">loading time series...</div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">prediction error over time</span>
+            </div>
+            <div class="chart-body">
+                <div id="chart-error" class="loading">loading...</div>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <span class="chart-title">model comparison — mse</span>
+            </div>
+            <div class="chart-body">
+                <div id="chart-bar" class="loading">loading...</div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <p>Alex Plotnikov · HSE · faculty of computer science · 2026</p>
+    <p id="pred-count"></p>
+</footer>
+
+<script src="/js/main.js"></script>
 </body>
 </html>
