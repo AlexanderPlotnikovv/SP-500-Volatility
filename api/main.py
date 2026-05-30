@@ -9,7 +9,7 @@ import config
 app = FastAPI(title="S&P500 Volatility Forecasting")
 
 RESULTS_PATH = config.OUTPUTS_DIR / "results.json"
-FRONTEND_PATH = Path("frontend")
+FRONTEND_PATH = Path(__file__).parent.parent / "frontend"
 
 
 @app.get("/api/health")
@@ -38,6 +38,9 @@ def index():
         raise HTTPException(status_code=404, detail="index.html not found")
     return FileResponse(html_path, status_code=200)
 
+
+app.mount("/css", StaticFiles(directory=str(FRONTEND_PATH / "css")), name="css")
+app.mount("/js", StaticFiles(directory=str(FRONTEND_PATH / "js")), name="js")
 
 if __name__ == "__main__":
     import uvicorn
