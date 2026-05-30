@@ -42,6 +42,7 @@ git clone https://github.com/AlexanderPlotnikovv/SP-500-Volatility
 cd SP-500-Volatility
 pip install -r requirements.txt
 python3 run_pipeline.py
+python3 api/main.py
 ```
 
 ### Linux
@@ -51,6 +52,7 @@ git clone https://github.com/AlexanderPlotnikovv/SP-500-Volatility
 cd SP-500-Volatility
 pip install -r requirements.txt
 python3 run_pipeline.py
+python3 api/main.py
 ```
 
 ## Pipeline
@@ -65,10 +67,32 @@ run_pipeline.py
 └── Step 6: Train models → results.json
 ```
 
+## Web Dashboard
+
+After running the pipeline, start the dashboard:
+
+```bash
+python api/main.py
+```
+
+Opens automatically at `http://localhost:8000`
+
+Features:
+- Realized volatility time series with all model predictions
+- COVID-19 crash annotation (2020-03-16)
+- Model comparison by MSE
+- Prediction error over time
+
 ## Project Structure
 
 ```
 SP-500-Volatility/
+├── api/
+│   └── main.py             # FastAPI server
+├── frontend/
+│   ├── index.html          # Dashboard
+│   ├── css/style.css       # Styles
+│   └── js/main.js          # Plotly visualizations
 ├── src/
 │   ├── data/
 │   │   ├── loader.py       # S&P 500 data download
