@@ -31,6 +31,20 @@
             <span class="chart-title">realized volatility — actual vs predicted</span>
             <div class="legend" id="main-legend"></div>
         </div>
+
+        <div class="controls-bar">
+            <div class="control-group">
+                <label class="control-label">from</label>
+                <input type="date" id="date-from" class="date-input">
+            </div>
+            <div class="control-group">
+                <label class="control-label">to</label>
+                <input type="date" id="date-to" class="date-input">
+            </div>
+            <button class="reset-btn" id="reset-btn">reset</button>
+            <span class="range-hint" id="range-hint"></span>
+        </div>
+
         <div class="chart-body">
             <div id="chart-main" class="loading">loading time series...</div>
         </div>
@@ -58,7 +72,7 @@
 </main>
 
 <footer class="footer">
-    <p>Alex Plotnikov · HSE · faculty of computer science · 2026</p>
+    <p>hse · faculty of computer science · 2026</p>
     <p id="pred-count"></p>
 </footer>
 

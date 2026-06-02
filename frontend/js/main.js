@@ -16,12 +16,13 @@ const LAYOUT_BASE = {
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
     font: {family: "'IBM Plex Mono', monospace", color: '#8888a0', size: 10},
-    margin: {t: 10, b: 40, l: 65, r: 20},
+    margin: {t: 10, b: 55, l: 80, r: 20},
     xaxis: {
         gridcolor: 'rgba(255,255,255,0.04)',
         linecolor: 'rgba(255,255,255,0.07)',
         tickcolor: 'rgba(255,255,255,0.07)',
         tickfont: {size: 9},
+        title: {text: 'Date', font: {size: 9, color: '#555568'}},
     },
     yaxis: {
         gridcolor: 'rgba(255,255,255,0.04)',
@@ -29,6 +30,7 @@ const LAYOUT_BASE = {
         tickcolor: 'rgba(255,255,255,0.07)',
         tickfont: {size: 9},
         tickformat: '.2e',
+        title: {text: 'RV = r²', font: {size: 9, color: '#555568'}},
     },
     hovermode: 'x unified',
     hoverlabel: {
@@ -38,24 +40,85 @@ const LAYOUT_BASE = {
     },
 };
 
-const CONFIG = {displayModeBar: false, responsive: true};
+const CONFIG = {
+    displayModeBar: true,
+    responsive: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d', 'toImage'],
+};
+
+let GLOBAL_DATA = null;
 
 async function init() {
     const res = await fetch('/api/results');
-    const data = await res.json();
-    const {period, models} = data;
+    GLOBAL_DATA = await res.json();
+    const {period, models} = GLOBAL_DATA;
 
     document.getElementById('period-badge').textContent =
         `${period.start} → ${period.end}`;
 
-    renderMetrics(models);
-    renderMainChart(models);
-    renderErrorChart(models);
-    renderBarChart(models);
+    const fromInput = document.getElementById('date-from');
+    const toInput = document.getElementById('date-to');
+
+    fromInput.value = period.start;
+    toInput.value = period.end;
+    fromInput.min = period.start;
+    fromInput.max = period.end;
+    toInput.min = period.start;
+    toInput.max = period.end;
+
+    // attach listeners (reliable, not inline)
+    fromInput.addEventListener('change', renderAll);
+    toInput.addEventListener('change', renderAll);
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        fromInput.value = period.start;
+        toInput.value = period.end;
+        renderAll();
+    });
+
+    renderAll();
 
     const count = Object.values(models)[0].predictions.length;
     document.getElementById('pred-count').textContent =
         `${count.toLocaleString()} trading days · ${Object.keys(models).length} models`;
+}
+
+function getFiltered() {
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+    const models = GLOBAL_DATA.models;
+
+    const result = {};
+    for (const [name, m] of Object.entries(models)) {
+        const idx = [];
+        for (let i = 0; i < m.dates.length; i++) {
+            if (m.dates[i] >= from && m.dates[i] <= to) idx.push(i);
+        }
+        result[name] = {
+            ...m,
+            dates: idx.map(i => m.dates[i]),
+            predictions: idx.map(i => m.predictions[i]),
+            actuals: idx.map(i => m.actuals[i]),
+        };
+    }
+    return result;
+}
+
+function renderAll() {
+    const filtered = getFiltered();
+
+    // update hint
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+    const n = Object.values(filtered)[0].dates.length;
+    document.getElementById('range-hint').textContent =
+        `${n.toLocaleString()} days selected`;
+
+    renderMetrics(filtered);
+    renderMainChart(filtered);
+    renderErrorChart(filtered);
+    renderBarChart(filtered);
 }
 
 function renderMetrics(models) {
@@ -90,14 +153,18 @@ function renderMetrics(models) {
 
 function renderMainChart(models) {
     const el = document.getElementById('chart-main');
-    el.style.height = '360px';
+    el.style.height = '380px';
     el.className = '';
     el.innerHTML = '';
 
     const entries = Object.entries(models);
     const firstModel = entries[0][1];
-
     const traces = [];
+
+    // clip top 1% of actuals → always informative outside COVID spike
+    const sorted = firstModel.actuals.slice().sort((a, b) => a - b);
+    const p99 = sorted[Math.floor(sorted.length * 0.99)];
+    const yRange = [0, p99 * 1.15];
 
     traces.push({
         x: firstModel.dates,
@@ -105,10 +172,10 @@ function renderMainChart(models) {
         name: 'Actual RV',
         type: 'scatter',
         mode: 'lines',
-        line: {color: 'rgba(255,255,255,0.15)', width: 1},
+        line: {color: 'rgba(255,255,255,0.18)', width: 1},
         fill: 'tozeroy',
-        fillcolor: 'rgba(255,255,255,0.02)',
-        hovertemplate: '%{y:.2e}<extra>Actual</extra>',
+        fillcolor: 'rgba(255,255,255,0.025)',
+        hovertemplate: '<b>%{x}</b><br>Actual RV: %{y:.4e}<extra></extra>',
     });
 
     entries.forEach(([name, m]) => {
@@ -120,16 +187,24 @@ function renderMainChart(models) {
             mode: 'lines',
             line: {
                 color: MODEL_COLORS[name] || '#888',
-                width: name === 'Baseline' ? 1 : 1.5,
+                width: name === 'Baseline' ? 1 : 1.6,
                 dash: name === 'Baseline' ? 'dot' : 'solid',
             },
-            hovertemplate: `%{y:.2e}<extra>${name}</extra>`,
+            hovertemplate: `<b>%{x}</b><br>${name}: %{y:.4e}<extra></extra>`,
         });
     });
 
-    Plotly.newPlot(el, traces, {
+    Plotly.react(el, traces, {
         ...LAYOUT_BASE,
-        margin: {t: 10, b: 50, l: 65, r: 20},
+        yaxis: {...LAYOUT_BASE.yaxis, range: yRange},
+        legend: {
+            bgcolor: 'rgba(17,17,24,0.85)',
+            bordercolor: 'rgba(255,255,255,0.07)',
+            borderwidth: 1,
+            font: {size: 9},
+            x: 0.01, y: 0.99,
+            xanchor: 'left', yanchor: 'top',
+        },
         shapes: [{
             type: 'line',
             x0: '2020-03-16', x1: '2020-03-16',
@@ -137,17 +212,22 @@ function renderMainChart(models) {
             line: {color: 'rgba(255,107,107,0.25)', width: 1, dash: 'dot'},
         }],
         annotations: [{
-            x: '2020-03-16', y: 1, xref: 'x', yref: 'paper',
-            text: 'COVID crash',
+            x: '2020-03-16', y: 0.97, xref: 'x', yref: 'paper',
+            text: 'COVID-19',
             showarrow: false,
-            font: {size: 8, color: 'rgba(255,107,107,0.5)', family: "'IBM Plex Mono', monospace"},
-            xanchor: 'left',
-            xshift: 6,
+            font: {
+                size: 8, color: 'rgba(255,107,107,0.6)',
+                family: "'IBM Plex Mono', monospace"
+            },
+            xanchor: 'left', xshift: 5,
         }],
     }, CONFIG);
 
     const legend = document.getElementById('main-legend');
-    const items = [['Actual RV', 'rgba(255,255,255,0.3)'], ...Object.entries(MODEL_COLORS)];
+    const items = [
+        ['Actual RV', 'rgba(255,255,255,0.3)'],
+        ...Object.entries(MODEL_COLORS),
+    ];
     legend.innerHTML = items.map(([n, c]) => `
     <div class="legend-item">
       <div class="legend-dot" style="background:${c}"></div>
@@ -161,30 +241,30 @@ function renderErrorChart(models) {
     el.className = '';
     el.innerHTML = '';
 
-    const traces = Object.entries(models)
-        .map(([name, m]) => ({
-            x: m.dates,
-            y: m.predictions.map((p, i) => p - m.actuals[i]),
-            name,
-            type: 'scatter',
-            mode: 'lines',
-            line: {
-                color: MODEL_COLORS[name], width: name === 'Baseline' ? 1 : 1.5,
-                dash: name === 'Baseline' ? 'dot' : 'solid'
-            },
-            hovertemplate: `%{y:.2e}<extra>${name}</extra>`,
-        }));
+    const traces = Object.entries(models).map(([name, m]) => ({
+        x: m.dates,
+        y: m.predictions.map((p, i) => p - m.actuals[i]),
+        name,
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+            color: MODEL_COLORS[name],
+            width: name === 'Baseline' ? 1 : 1.5,
+            dash: name === 'Baseline' ? 'dot' : 'solid',
+        },
+        hovertemplate: `<b>%{x}</b><br>${name}: %{y:.4e}<extra></extra>`,
+    }));
 
-    Plotly.newPlot(el, traces, {
+    Plotly.react(el, traces, {
         ...LAYOUT_BASE,
         yaxis: {
             ...LAYOUT_BASE.yaxis,
-            title: {text: 'pred − actual', font: {size: 9}},
+            title: {text: 'pred − actual', font: {size: 9, color: '#555568'}},
             zeroline: true,
-            zerolinecolor: 'rgba(255,255,255,0.15)',
+            zerolinecolor: 'rgba(255,255,255,0.2)',
             zerolinewidth: 1,
         },
-        showlegend: false,
+        legend: {bgcolor: 'transparent', font: {size: 9}},
     }, CONFIG);
 }
 
@@ -195,39 +275,56 @@ function renderBarChart(models) {
     el.innerHTML = '';
 
     const entries = Object.entries(models);
-
     const ys = entries.map(([, m]) => m.metrics.MSE);
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
-    const padding = (maxY - minY) * 0.3;
-    const range = [minY * 0.99, maxY * 1.01];
+    const minIdx = ys.indexOf(minY);
 
-    Plotly.newPlot(el, [{
+    // best model full color, others muted
+    const colors = entries.map(([n], i) =>
+        i === minIdx ? MODEL_COLORS[n] : MODEL_COLORS[n] + '88'
+    );
+
+    Plotly.react(el, [{
         x: entries.map(([n]) => n),
         y: ys,
         type: 'bar',
+        width: 0.55,
         marker: {
-            color: entries.map(([n]) => MODEL_COLORS[n] || '#888'),
-            opacity: 0.85,
+            color: colors,
+            cornerradius: 6,
+            line: {width: 0},
         },
-        hovertemplate: '%{y:.3e}<extra></extra>',
+        hovertemplate: '<b>%{x}</b><br>MSE: %{y:.4e}<extra></extra>',
     }], {
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
         font: {family: "'IBM Plex Mono', monospace", color: '#8888a0', size: 10},
-        margin: {t: 10, b: 40, l: 65, r: 20},
+        margin: {t: 25, b: 45, l: 80, r: 20},
         yaxis: {
             gridcolor: 'rgba(255,255,255,0.04)',
             tickformat: '.2e',
-            title: {text: 'MSE', font: {size: 9}},
-            range: [minY * 0.99, maxY * 1.01],
+            title: {text: 'MSE ↓ lower is better', font: {size: 9, color: '#555568'}},
+            range: [minY * 0.985, maxY * 1.02],
+            zeroline: false,
         },
         xaxis: {
-            gridcolor: 'rgba(255,255,255,0.04)',
+            linecolor: 'rgba(255,255,255,0.07)',
             tickfont: {size: 9},
         },
         showlegend: false,
-        bargap: 0.35,
+        annotations: entries.map(([, m], i) => ({
+            x: i,
+            y: m.metrics.MSE,
+            text: m.metrics.MSE.toExponential(2),
+            showarrow: false,
+            yanchor: 'bottom',
+            yshift: 5,
+            font: {
+                size: 8.5, color: i === minIdx ? '#3ecf8e' : '#8888a0',
+                family: "'IBM Plex Mono', monospace"
+            },
+        })),
     }, CONFIG);
 }
 
